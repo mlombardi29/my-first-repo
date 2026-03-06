@@ -50,11 +50,49 @@ def view_tasks():
     print("-" * 30)
 
 
+def get_index(args, command):
+    """Parse and validate a 1-based task number from args."""
+    if not args:
+        print(f"Error: Please provide a task number (e.g., python todo.py {command} 1)")
+        sys.exit(1)
+    try:
+        index = int(args[0]) - 1
+    except ValueError:
+        print(f"Error: Task number must be an integer, got '{args[0]}'.")
+        sys.exit(1)
+    tasks = load_tasks()
+    if index < 0 or index >= len(tasks):
+        print(f"Error: No task #{args[0]}. You have {len(tasks)} task(s).")
+        sys.exit(1)
+    return index, tasks
+
+
+def mark_done(index, tasks):
+    """Mark a task as done by prefixing it with [done]."""
+    task = tasks[index]
+    if task.startswith("[done] "):
+        print(f'Task #{index + 1} is already marked done: "{task}"')
+        return
+    tasks[index] = "[done] " + task
+    save_tasks(tasks)
+    print(f'Marked as done: "{task}"')
+
+
+def delete_task(index, tasks):
+    """Remove a task from the list."""
+    task = tasks.pop(index)
+    save_tasks(tasks)
+    print(f'Deleted: "{task}"')
+    print(f"{len(tasks)} task(s) remaining.")
+
+
 def print_usage():
     """Show the user how to use the script."""
     print("Usage:")
     print('  python todo.py add "Your task"  — Add a new task')
     print("  python todo.py view             — View all tasks")
+    print("  python todo.py done <#>         — Mark a task as done")
+    print("  python todo.py delete <#>       — Delete a task")
 
 
 # --- Main entry point ---
@@ -71,6 +109,12 @@ if command == "add":
     add_task(task_text)
 elif command == "view":
     view_tasks()
+elif command == "done":
+    index, tasks = get_index(sys.argv[2:], "done")
+    mark_done(index, tasks)
+elif command == "delete":
+    index, tasks = get_index(sys.argv[2:], "delete")
+    delete_task(index, tasks)
 else:
     print(f'Error: Unknown command "{command}".')
     print_usage()
